@@ -41,7 +41,8 @@ int write_SPI(unsigned char * const spi_cs,
 
     *spi_cs=0;
     *spi_sclk=1;
-    for(int i =0; i<8;i++){
+    int i; 
+    for(i =0; i<8;i++){
         *spi_mosi=buffer[0] & 1<<(8-i);
  }     
     *spi_cs=1;
