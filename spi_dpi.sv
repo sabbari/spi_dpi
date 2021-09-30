@@ -21,9 +21,7 @@ import "DPI-C" context function int write_SPI( output bit spi_cs,
                                              input  bit spi_miso
 );
 
-import "DPI-C" context function     create_socket_andbind() ;
-import "DPI-C" context function   	 byte   receive();
-import "DPI-C" context function     send_to_client();
+import "DPI-C" context function     create_socket_and_bind() ;
 import "DPI-C" context function     close_server()  ;
 
 
