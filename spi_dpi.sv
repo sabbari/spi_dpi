@@ -14,11 +14,11 @@ module spi_dpi(
 
 
 
-// import "DPI-C" context function int spi_dpi( output bit spi_clk,
-//                                              output bit spi_mosi,
-//                                              output bit spi_cs,
-//                                              input  bit spi_miso
-// );
+import "DPI-C" context function int write_SPI( output bit spi_cs,
+                                             output bit spi_sclk,
+                                             output bit spi_mosi,
+                                             input  bit spi_miso
+);
 
 import "DPI-C" context function     create_socket_andbind() ;
 import "DPI-C" context function     receive();
@@ -42,6 +42,7 @@ begin
              $finish;
         end;
     send_to_client();
+    write_SPI(spi_cs_o,spi_clk_o,spi_mosi_o,spi_miso_i);
     
 end
 endmodule
