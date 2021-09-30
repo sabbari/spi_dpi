@@ -3,14 +3,14 @@
 #include <unistd.h> // read, write, close
 #include <arpa/inet.h> // sockaddr_in, AF_INET, SOCK_STREAM, INADDR_ANY, socket etc...
 #include <string.h> // memset
-#include "svdpi.h"
+//#include "svdpi.h"
 
 
 struct sockaddr_in server, client;
 
 int clientFd,serverFd ; 
 int port =1234;
-char buffer [1023];
+unsigned char buffer [1023];
 int size;
 
 
@@ -33,19 +33,20 @@ void spi_clk_cycle(unsigned char * const spi_sclk, unsigned char period_us ){
     usleep(period_us);
 
 }
-int write_SPI(unsigned char * const spi_cs,
-                unsigned char * const spi_sclk,
-                unsigned char * const spi_mosi,
-                const unsigned char spi_miso,
-                unsigned char buffer[]){
+extern int write_SPI(unsigned int *spi_cs,
+                unsigned int *  spi_sclk,
+                unsigned int *  spi_mosi,
+                const unsigned int spi_miso){
+                
 
-    *spi_cs=0;
+    printf("enterd writespi \n");                
+    *spi_cs = (char)0;
     *spi_sclk=1;
     int i; 
     for(i =0; i<8;i++){
         *spi_mosi=buffer[0] & 1<<(8-i);
  }     
-    *spi_cs=1;
+    *spi_cs =1;
 
 
 }
@@ -113,15 +114,17 @@ int main() {
 create_socket_andbind();
 
 
-    unsigned char * const spi_cs;
-    unsigned char * const spi_sclk;
-    unsigned char * const spi_mosi;
-    const unsigned char spi_miso;
+    unsigned int   spi_cs;
+    unsigned int   spi_sclk;
+    unsigned int   spi_mosi;
+    const unsigned int spi_miso;
+
 
   while (1) {
     
     receive();
     send_to_client();
+    write_SPI(&spi_cs,&spi_sclk,&spi_mosi,spi_miso);
     
   }
  close_server();
