@@ -5,6 +5,27 @@
 #include <string.h> // memset
 
 
+
+struct sockaddr_in server, client;
+
+int clientFd,serverFd ; 
+int port =1234;
+char buffer [1023];
+int size;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void spi_clk_cycle(unsigned char * const spi_sclk, unsigned char period_us ){
     *spi_sclk=0;
     usleep(period_us);
@@ -16,7 +37,7 @@ int write_SPI(unsigned char * const spi_cs,
                 unsigned char * const spi_sclk,
                 unsigned char * const spi_mosi,
                 const unsigned char spi_miso,
-                unsigned char* buffer){
+                unsigned char buffer[]){
 
     *spi_cs=0;
     *spi_sclk=1;
@@ -29,18 +50,15 @@ int write_SPI(unsigned char * const spi_cs,
 }
 
 
-struct sockaddr_in server, client;
 
-int create_socket(){
-  int serverFd = socket(AF_INET, SOCK_STREAM, 0);
+
+int create_socket_andbind(){
+  serverFd = socket(AF_INET, SOCK_STREAM, 0);
   if (serverFd < 0) {
     perror("Cannot create socket");
     exit(1);
   }
-  return serverFd;
-}
-
-int bind_port(int port,int serverFd ){
+  
   server.sin_family = AF_INET;
   server.sin_addr.s_addr = inet_addr("127.0.0.1"); //INADDR_ANY;
   server.sin_port = htons(port);
@@ -53,11 +71,11 @@ int bind_port(int port,int serverFd ){
     perror("Listen error");
     exit(3);
   }
-
+    return serverFd;
 
 }
-int receive (int serverFd,char * buffer, int port){
-    int clientFd;
+int receive (){
+    
     int len = sizeof(client);
     printf("waiting for clients at port %d \n",port );
     if ((clientFd = accept(serverFd, (struct sockaddr *)&client, &len)) < 0) {
@@ -66,8 +84,8 @@ int receive (int serverFd,char * buffer, int port){
     }
     char *client_ip = inet_ntoa(client.sin_addr);
     printf("Accepted new connection from a client %s:%d\n", client_ip, ntohs(client.sin_port));
-    *buffer=0;
-    int size = read(clientFd, buffer, sizeof(buffer));
+    memset(buffer, 0, sizeof(buffer));
+    size = read(clientFd, buffer, sizeof(buffer));
     if ( size < 0 ) {
       perror("read error");
       exit(5);
@@ -76,35 +94,35 @@ int receive (int serverFd,char * buffer, int port){
     return size;
 }
 
-int main() {
-    int clientFd;
-    int port=1234;
-    int serverFd=create_socket(); 
-    int out = bind_port(port,serverFd);
 
-char* buffer;
-unsigned char * const spi_cs;
-unsigned char * const spi_sclk;
-unsigned char * const spi_mosi;
-const unsigned char spi_miso;
-
-int len;
-
-  while (1) {
-    
-    int size =receive(serverFd,buffer,port);
-
+int send_to_client()
+{
     if (write(clientFd, buffer, size) < 0) {
       perror("write error");
       exit(6);
     }
-    write_SPI( spi_cs,
-                spi_sclk,
-                spi_mosi,
-                spi_miso,
-                buffer);
     close(clientFd);
+}
+
+ void close_server(){
+ close(serverFd);
+}
+int main() {
+
+create_socket_andbind();
+
+
+    unsigned char * const spi_cs;
+    unsigned char * const spi_sclk;
+    unsigned char * const spi_mosi;
+    const unsigned char spi_miso;
+
+  while (1) {
+    
+    receive();
+    send_to_client();
+    
   }
-  close(serverFd);
+ close_server();
   return 0;
 }
