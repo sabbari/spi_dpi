@@ -3,7 +3,7 @@
 #include <unistd.h> // read, write, close
 #include <arpa/inet.h> // sockaddr_in, AF_INET, SOCK_STREAM, INADDR_ANY, socket etc...
 #include <string.h> // memset
-
+#include "svdpi.h"
 
 
 struct sockaddr_in server, client;
@@ -52,7 +52,7 @@ int write_SPI(unsigned char * const spi_cs,
 
 
 
-int create_socket_andbind(){
+extern  int create_socket_andbind(){
   serverFd = socket(AF_INET, SOCK_STREAM, 0);
   if (serverFd < 0) {
     perror("Cannot create socket");
@@ -74,7 +74,7 @@ int create_socket_andbind(){
     return serverFd;
 
 }
-int receive (){
+extern  int receive (){
     
     int len = sizeof(client);
     printf("waiting for clients at port %d \n",port );
@@ -95,7 +95,7 @@ int receive (){
 }
 
 
-int send_to_client()
+extern  int send_to_client()
 {
     if (write(clientFd, buffer, size) < 0) {
       perror("write error");
@@ -104,7 +104,7 @@ int send_to_client()
     close(clientFd);
 }
 
- void close_server(){
+extern  void close_server(){
  close(serverFd);
 }
 int main() {
