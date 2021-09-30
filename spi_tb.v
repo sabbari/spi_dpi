@@ -3,10 +3,12 @@
 `timescale 1 ns/10 ps  // time-unit = 1 ns, precision = 10 ps
 
 
-module T22MEV0_tb; 
+module spi_tb; 
 
 
-reg sys_clk,rstb,sclk,mosi,miso,cs ;
+reg sys_clk,sclk,mosi,miso,cs ;
+reg [7:0] data;
+reg [2:0] count ;
 
 localparam period = 20;  
 
@@ -21,8 +23,10 @@ spi_dpi DUT (
 // reset
 initial 
 begin 
+	data=56;
 	$vcdpluson();
-    $vcdplusmemon();
+    	$vcdplusmemon();
+count =7;	
 end
 
 always 
@@ -33,8 +37,16 @@ begin
 
     sys_clk = 1'b0;
     #10; // low for 10 * timescale = 10 ns
-end
 
+end
+always 
+begin
+
+    	#15;
+	count = count-1;
+	miso= (data & (1<<count))>>count;
+
+end
 
 
 endmodule
