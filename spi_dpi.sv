@@ -31,7 +31,7 @@ initial
         spi_clk_o   =1;
         spi_mosi_o  =0;
 	buffer =0;
-	 create_socket_andbind() ;
+	 create_socket_and_bind() ;
     end
 
 always @(posedge sys_clk)
