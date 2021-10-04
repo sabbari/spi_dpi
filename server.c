@@ -8,18 +8,18 @@ easier
 
 */
 
-#include "svdpi.h"
+//#include "svdpi.h"
 #include <arpa/inet.h> // sockaddr_in, AF_INET, SOCK_STREAM, INADDR_ANY, socket etc...
 #include <fcntl.h>
 #include <stdio.h>  // perror, printf
 #include <stdlib.h> // exit, atoi
 #include <string.h> // memset
 #include <unistd.h> // read, write, close
-
-#define RECEIVE 0
-#define SETUP_SPI 1
-#define SEND_SPI 2
-#define END_SPI 3
+#define OPEN_PORT 0
+#define RECEIVE 1
+#define SETUP_SPI 2
+#define SEND_SPI 3
+#define END_SPI 4
 #define CLOCK_LOW 0
 #define CLOCK_HIGH 1
 
@@ -44,8 +44,8 @@ extern int create_socket_and_bind();
 extern void close_server() { close(serverFd); }
 
 extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
-                     const unsigned int spi_miso) {
-                         
+                     const unsigned int spi_miso,int port) {
+
   static int counter, state, clock_state = 0;
 
   int i = counter % 8;
@@ -67,7 +67,7 @@ extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
   case (SETUP_SPI):
     *spi_cs = 0;
     *spi_sclk = 1;
-    state = 2;
+    state = SEND_SPI;
     return 1;
 
   case (SEND_SPI):
@@ -106,7 +106,7 @@ extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
     int sent = send_to_client(clientFd, miso_buffer, size);
     if (sent < size) {
       perror("Couldn't send all miso buffer to client ");
-      return -1
+      return -1;
     }
     return 0;
   }
