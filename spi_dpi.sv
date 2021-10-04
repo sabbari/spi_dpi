@@ -18,7 +18,8 @@ reg [7:0] buffer;
 import "DPI-C" context function int write_SPI( output bit spi_cs,
                                              output bit spi_sclk,
                                              output bit spi_mosi,
-                                             input  bit spi_miso
+                                             input  bit spi_miso,
+                                             input  int port
 );
 
 import "DPI-C" context function     create_socket_and_bind() ;
@@ -31,13 +32,13 @@ initial
         spi_clk_o   =1;
         spi_mosi_o  =0;
 	buffer =0;
-	 create_socket_and_bind() ;
+	 //create_socket_and_bind() ;
     end
 
 always @(posedge sys_clk)
 begin
 
-	write_SPI(spi_cs_o,spi_clk_o,spi_mosi_o,spi_miso_i);
+	write_SPI(spi_cs_o,spi_clk_o,spi_mosi_o,spi_miso_i,1234);
     	
 end
 endmodule

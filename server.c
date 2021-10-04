@@ -25,8 +25,8 @@ easier
 
 struct sockaddr_in server, client;
 
-int clientFd, serverFd; // client and servet file descriptor
-int port = 1235;
+
+//int port = 1235;
 unsigned char buffer[1023];
 unsigned char miso_buffer[1023];
 
@@ -37,7 +37,7 @@ unsigned int buffer_index = 0;
 int receive(int clientFd, char *buffer);
 int send_to_client(int clientFd, char *miso_buffer, int size);
 
-extern int create_socket_and_bind();
+extern int create_socket_and_bind(int port,int* clientFd, int* serverFd );
 
 // close_server is wrapped in this no argument function t make it easier to call
 // from verilog file
@@ -47,7 +47,7 @@ extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
                      const unsigned int spi_miso,int port) {
 
   static int counter, state, clock_state = 0;
-
+  static int clientFd, serverFd; // client and servet file descriptor
   int i = counter % 8;
   if (state)
     printf("counter %d  state %d i %d clock_state %d buffer_index %d  size %d "
@@ -56,6 +56,13 @@ extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
            buffer[buffer_index], *spi_mosi);
 
   switch (state) {
+  case(OPEN_PORT):
+    state= create_socket_and_bind(port,&clientFd,&serverFd)>0 ? RECEIVE :OPEN_PORT; 
+    return 1;
+
+    
+
+
   case (RECEIVE):
     counter = 0;
     buffer_index = 0;
@@ -112,9 +119,9 @@ extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
   }
 }
 
-int create_socket_and_bind() {
-  serverFd = socket(AF_INET, SOCK_STREAM, 0);
-  if (serverFd < 0) {
+int create_socket_and_bind(int port,int* clientFd, int* serverFd ) {
+  *serverFd = socket(AF_INET, SOCK_STREAM, 0);
+  if (*serverFd < 0) {
     perror("Cannot create socket");
     exit(1);
   }
@@ -123,18 +130,19 @@ int create_socket_and_bind() {
   server.sin_addr.s_addr = inet_addr("127.0.0.1"); // INADDR_ANY;
   server.sin_port = htons(port);
   int len = sizeof(server);
-  if (bind(serverFd, (struct sockaddr *)&server, len) < 0) {
-    perror("Cannot bind socket");
-    exit(2);
+  if (bind(*serverFd, (struct sockaddr *)&server, len) < 0) {
+    perror("Cannot bind socket, trying port %d",port+1);
+    create_socket_and_bind(port +1,clientFd,serverFd);
+    //exit(2);
   }
-  if (listen(serverFd, 10) < 0) {
+  if (listen(*serverFd, 10) < 0) {
     perror("Listen error");
     exit(3);
   }
 
   len = sizeof(client);
   printf("waiting for clients at port %d \n", port);
-  if ((clientFd = accept(serverFd, (struct sockaddr *)&client, &len)) < 0) {
+  if ((*clientFd = accept(*serverFd, (struct sockaddr *)&client, &len)) < 0) {
     perror("accept error");
     exit(4);
   }
@@ -142,10 +150,10 @@ int create_socket_and_bind() {
   printf("Accepted new connection from a client %s:%d\n", client_ip,
          ntohs(client.sin_port));
 
-  int flags = fcntl(clientFd, F_GETFL, 0);
-  fcntl(clientFd, F_SETFL, flags | O_NONBLOCK);
+  int flags = fcntl(*clientFd, F_GETFL, 0);
+  fcntl(*clientFd, F_SETFL, flags | O_NONBLOCK);
 
-  return serverFd;
+  return 1;
 }
 
 int receive(int clientFd, char *buffer) {
