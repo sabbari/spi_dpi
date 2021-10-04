@@ -22,34 +22,29 @@ easier
 #define END_SPI 4
 #define CLOCK_LOW 0
 #define CLOCK_HIGH 1
+#define DEBUG 0
+#define BUFFER_SIZE 32
 
-
-
-//int port = 1235;
-unsigned char buffer[1023];
-unsigned char miso_buffer[1023];
 
 int size;
 
 unsigned int buffer_index = 0;
 
-int receive(int clientFd, char *buffer);
+int receive(int clientFd, char *buffer, char* miso_buffer);
 int send_to_client(int clientFd, char *miso_buffer, int size);
 
 int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockaddr_in* server, struct sockaddr_in* client );
 
-// close_server is wrapped in this no argument function t make it easier to call
-// from verilog file
-//extern void close_server() { close(serverFd); }
-
 extern int spi(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
                      const unsigned int spi_miso, int port) {
 
-  static int counter, state, clock_state = 0;
+  static unsigned char buffer[BUFFER_SIZE];
+  static  char miso_buffer[BUFFER_SIZE];	
+  static int size, counter, state, clock_state = 0;
   static int clientFd, serverFd; // client and servet file descriptor
   static struct sockaddr_in server, client;
   int i = counter % 8;
-  if (state)
+  if (DEBUG)
     printf("counter %d  state %d i %d clock_state %d buffer_index %d  size %d "
            "mosi[i] %d mosi %d  \n",
            counter, state, i, clock_state, buffer_index, size,
@@ -59,15 +54,11 @@ extern int spi(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
   case(OPEN_PORT):
     state= create_socket_and_bind(port,&clientFd,&serverFd, &server, &client)>0 ? RECEIVE :OPEN_PORT; 
     return 1;
-
-    
-
-
   case (RECEIVE):
     counter = 0;
     buffer_index = 0;
     *spi_cs = 1;
-    size = receive(clientFd, buffer);
+    size = receive(clientFd, buffer,miso_buffer);
     state = size > 0 ? SETUP_SPI : RECEIVE;
     return 1;
 
@@ -157,7 +148,7 @@ int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockadd
   return 1;
 }
 
-int receive(int clientFd, char *buffer) {
+int receive(int clientFd, char *buffer, char *miso_buffer) {
 
   memset(buffer, 0, sizeof(buffer));
   memset(miso_buffer, 0, sizeof(miso_buffer));

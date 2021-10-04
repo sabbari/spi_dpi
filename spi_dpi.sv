@@ -1,8 +1,6 @@
 
 
-module spi_dpi()
-  parameter port = 1234
-)(
+module spi_dpi(
     output reg spi_clk_o,
     output reg spi_mosi_o,
     output reg spi_cs_o,
@@ -10,9 +8,8 @@ module spi_dpi()
     input sys_clk
 );
 
+parameter port = 1234;
 
-
-reg [7:0] buffer;
 
 
 
@@ -22,10 +19,8 @@ import "DPI-C" context function int spi( output bit spi_cs,
                                              output bit spi_mosi,
                                              input  bit spi_miso,
                                              input  int port
-);
+); // spi() defined in file server_spi.c
 
-import "DPI-C" context function     create_socket_and_bind() ;
-//import "DPI-C" context function     close_server()  ;
 
 
 initial 
@@ -33,8 +28,6 @@ initial
         spi_cs_o    =1;
         spi_clk_o   =1;
         spi_mosi_o  =0;
-	    buffer =0;
-	 //create_socket_and_bind() ;
     end
 
 always @(posedge sys_clk)
