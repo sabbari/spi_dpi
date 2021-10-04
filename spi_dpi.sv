@@ -37,3 +37,39 @@ begin
     	
 end
 endmodule
+
+
+module spi_slave_dpi(
+    input reg spi_clk_i,
+    input reg spi_mosi_i,
+    input reg spi_cs_i,
+    output spi_miso_o
+);
+
+parameter port = 1234;
+
+
+
+
+
+import "DPI-C" context function int spi_slave( input bit spi_cs,
+                                             input bit spi_sclk,
+                                             input bit spi_mosi,
+                                             output bit spi_miso,
+                                             input  int port
+); // spi() defined in file server_spi.c
+
+
+
+initial 
+    begin 
+        spi_miso_o    =0;
+    end
+
+always @(*)
+begin
+
+	spi_master(spi_cs_i,spi_clk_i,spi_mosi_i,spi_miso_o,port);
+    	
+end
+endmodule

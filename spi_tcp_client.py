@@ -15,7 +15,7 @@ tcpsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 def kbdListener():
     global kbdInput, finished
-    kbdInput = input("spi-shell : ")
+    kbdInput = input("spi-cmd: ")
     finished = True
 def send_and_print(socket,string):
 	if(len(string)):

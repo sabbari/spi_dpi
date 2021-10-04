@@ -109,7 +109,55 @@ extern int spi_master(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
     return 0;
   }
 }
+extern int spi_slave(const unsigned int  spi_cs, const unsigned int  spi_sclk, const unsigned int spi_mosi,
+                     svBit *spi_miso, int port) {
 
+  static unsigned char buffer[BUFFER_SIZE];
+  static  char miso_buffer[BUFFER_SIZE];	
+  static int size, counter, state, clock_state = 0;
+  static int clientFd, serverFd; // client and servet file descriptor
+  static struct sockaddr_in server, client;
+  int i = counter % 8;
+  if (DEBUG)
+    printf("counter %d  state %d i %d clock_state %d buffer_index %d  size %d "
+           "mosi[i] %d mosi %d  \n",
+           counter, state, i, clock_state, buffer_index, size,
+           buffer[buffer_index], *spi_mosi);
+  switch (state)
+  {
+  case 0:
+        state= create_socket_and_bind(port,&clientFd,&serverFd, &server, &client)>0 ? 1 :0; 
+        return 1;
+  case 1:
+    if(clock_state== CLOCK_HIGH & *spi_cs==0){
+        state=2;
+        return 1;
+        counter = 0;
+        *spi_miso =0;
+      }
+    return 1;
+  case 2 :
+
+        if(clock_state== CLOCK_HIGH & *spi_cs==0){
+            buffer[buffer_index]=buffer[buffer_index]<1 | (spi_mosi&1)
+            counter=counter+1;
+            if(i==7){
+              buffer_index=buffer_index+1;
+              return 1;
+            }
+        }else if (*spi_cs==1){
+          state =3;
+          return 1;
+        }
+  case 3 :
+      send_to_client(clientFd,buffer,buffer_index+1);
+
+      return 1;
+
+
+  }
+
+}
 int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockaddr_in* server, struct sockaddr_in* client ) {
 	memset(server, 0, sizeof(*server));
 
