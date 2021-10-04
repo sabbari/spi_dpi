@@ -35,7 +35,7 @@ int send_to_client(int clientFd, char *miso_buffer, int size);
 
 int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockaddr_in* server, struct sockaddr_in* client );
 
-extern int spi(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
+extern int spi_master(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
                      const unsigned int spi_miso, int port) {
 
   static unsigned char buffer[BUFFER_SIZE];

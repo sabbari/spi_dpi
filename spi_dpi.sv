@@ -1,6 +1,6 @@
 
 
-module spi_dpi(
+module spi_master_dpi(
     output reg spi_clk_o,
     output reg spi_mosi_o,
     output reg spi_cs_o,
@@ -14,7 +14,7 @@ parameter port = 1234;
 
 
 
-import "DPI-C" context function int spi( output bit spi_cs,
+import "DPI-C" context function int spi_master( output bit spi_cs,
                                              output bit spi_sclk,
                                              output bit spi_mosi,
                                              input  bit spi_miso,
