@@ -8,7 +8,7 @@ easier
 
 */
 
-//#include "svdpi.h"
+#include "svdpi.h"
 #include <arpa/inet.h> // sockaddr_in, AF_INET, SOCK_STREAM, INADDR_ANY, socket etc...
 #include <fcntl.h>
 #include <stdio.h>  // perror, printf
@@ -42,7 +42,7 @@ int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockadd
 // from verilog file
 //extern void close_server() { close(serverFd); }
 
-extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
+extern int spi(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
                      const unsigned int spi_miso, int port) {
 
   static int counter, state, clock_state = 0;
@@ -120,20 +120,21 @@ extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
 }
 
 int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockaddr_in* server, struct sockaddr_in* client ) {
+	memset(server, 0, sizeof(*server));
+
   *serverFd = socket(AF_INET, SOCK_STREAM, 0);
   if (*serverFd < 0) {
     perror("Cannot create socket");
-    exit(1);
+   // exit(1);
   }
 
   server->sin_family = AF_INET;
   server->sin_addr.s_addr = inet_addr("127.0.0.1"); // INADDR_ANY;
   server->sin_port = htons(port);
-  int len = sizeof(server);
-  if (bind(*serverFd, server, len) < 0) {
-    perror("Cannot bind socket, trying port +1");
-    create_socket_and_bind(port +1,clientFd,serverFd);
-    //exit(2);
+  int len = sizeof(*server);
+  if (bind(*serverFd,(struct sockaddr *)server, len) < 0) {
+    perror("Cannot bind socket");
+    exit(2);
   }
   if (listen(*serverFd, 10) < 0) {
     perror("Listen error");
@@ -142,7 +143,7 @@ int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockadd
 
   len = sizeof(*client);
   printf("waiting for clients at port %d \n", port);
-  if ((*clientFd = accept(*serverFd, (struct sockaddr *)&client, &len)) < 0) {
+  if ((*clientFd = accept(*serverFd, (struct sockaddr *)client, &len)) < 0) {
     perror("accept error");
     exit(4);
   }
