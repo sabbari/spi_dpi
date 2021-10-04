@@ -37,12 +37,7 @@ initial
 always @(posedge sys_clk)
 begin
 
-	if(write_SPI(spi_cs_o,spi_clk_o,spi_mosi_o,spi_miso_i)==0)
-	begin 
-		//$finish();
-	end;
-
-
+	write_SPI(spi_cs_o,spi_clk_o,spi_mosi_o,spi_miso_i);
     	
 end
 endmodule
