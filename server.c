@@ -16,7 +16,7 @@ TODO : clean the code and make it areal code , be aware that a lot of function a
 #include <arpa/inet.h> // sockaddr_in, AF_INET, SOCK_STREAM, INADDR_ANY, socket etc...
 #include <string.h> // memset
 #include "svdpi.h"
-
+ #include <fcntl.h>
 
 struct sockaddr_in server, client;
 
@@ -24,7 +24,7 @@ int clientFd,serverFd ; // client and servet file descriptor
 int port =1235;
 unsigned char buffer [1023];
 unsigned char miso_buffer[1023];
-int counter ,state,clock_state =0;
+
 int size;
 
 unsigned int buffer_index=0;
@@ -36,7 +36,9 @@ unsigned int buffer_index=0;
 int receive ();
 int send_to_client();
 
-extern  int create_socket_and_bind();
+extern int create_socket_and_bind();
+
+
 extern  void close_server(){
  close(serverFd);
 }
@@ -47,10 +49,10 @@ extern int write_SPI(svBit *  spi_cs,
 		        svBit *  spi_mosi,
 		        const unsigned int spi_miso){
 
-
+static int counter ,state,clock_state =0;
 
 int i =counter % 8;
-if(state) printf("counter %d  state %d i %d clock_state %d buffer_index %d  size %d miso %d \n",counter,state,i,clock_state,buffer_index,size,miso_buffer[buffer_index]);
+if(state) printf("counter %d  state %d i %d clock_state %d buffer_index %d  size %d mosi[i] %d mosi %d  \n",counter,state,i,clock_state,buffer_index,size,buffer[buffer_index],*spi_mosi);
 
 
 
@@ -85,7 +87,7 @@ if(state) printf("counter %d  state %d i %d clock_state %d buffer_index %d  size
 			miso_buffer[buffer_index]=miso_buffer[buffer_index]<<1 | spi_miso;
 			
 			if(i==7){
-				if(buffer_index==(size-3)){
+				if(buffer_index==(size-1)){
 					state=3;
 					return 1;		
 					}
@@ -112,7 +114,7 @@ if(state) printf("counter %d  state %d i %d clock_state %d buffer_index %d  size
 
 
 
-int create_socket_andbind(){
+int create_socket_and_bind(){
   serverFd = socket(AF_INET, SOCK_STREAM, 0);
   if (serverFd < 0) {
     perror("Cannot create socket");
@@ -131,12 +133,8 @@ int create_socket_andbind(){
     perror("Listen error");
     exit(3);
   }
-    return serverFd;
-
-}
- int receive (){
     
-    int len = sizeof(client);
+   len = sizeof(client);
     printf("waiting for clients at port %d \n",port );
     if ((clientFd = accept(serverFd, (struct sockaddr *)&client, &len)) < 0) {
       perror("accept error");
@@ -144,23 +142,34 @@ int create_socket_andbind(){
     }
     char *client_ip = inet_ntoa(client.sin_addr);
     printf("Accepted new connection from a client %s:%d\n", client_ip, ntohs(client.sin_port));
+
+	int flags = fcntl(clientFd, F_GETFL, 0);
+	fcntl(clientFd, F_SETFL, flags | O_NONBLOCK);
+
+    return serverFd;
+
+}
+ int receive (){
+
     memset(buffer, 0, sizeof(buffer));
 	memset(miso_buffer, 0, sizeof(miso_buffer));
     size = read(clientFd, buffer, sizeof(buffer));
     if ( size < 0 ) {
-      perror("read error");
-      exit(5);
+      	return -1;
+	//	perror("read error");
+  	//    exit(5);
     }
-    printf("received %s from client\n", buffer);
+   // printf("received %s from client\n", buffer);
     return size;
 }
 
 
   int send_to_client()
 {
-    if (write(clientFd, miso_buffer, size-2) < 0) {
+    if (write(clientFd, miso_buffer, size) < 0) {
       perror("write error");
-      exit(6);
+      //exit(6);
+	return -1;
     }
-    close(clientFd);
+   // close(clientFd);
 }
