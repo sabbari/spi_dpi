@@ -23,7 +23,7 @@ import "DPI-C" context function int write_SPI( output bit spi_cs,
 );
 
 import "DPI-C" context function     create_socket_and_bind() ;
-import "DPI-C" context function     close_server()  ;
+//import "DPI-C" context function     close_server()  ;
 
 
 initial 

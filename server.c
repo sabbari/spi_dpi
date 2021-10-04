@@ -23,7 +23,6 @@ easier
 #define CLOCK_LOW 0
 #define CLOCK_HIGH 1
 
-struct sockaddr_in server, client;
 
 
 //int port = 1235;
@@ -37,17 +36,18 @@ unsigned int buffer_index = 0;
 int receive(int clientFd, char *buffer);
 int send_to_client(int clientFd, char *miso_buffer, int size);
 
-extern int create_socket_and_bind(int port,int* clientFd, int* serverFd );
+int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockaddr_in* server, struct sockaddr_in* client );
 
 // close_server is wrapped in this no argument function t make it easier to call
 // from verilog file
-extern void close_server() { close(serverFd); }
+//extern void close_server() { close(serverFd); }
 
 extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
-                     const unsigned int spi_miso,int port) {
+                     const unsigned int spi_miso, int port) {
 
   static int counter, state, clock_state = 0;
   static int clientFd, serverFd; // client and servet file descriptor
+  static struct sockaddr_in server, client;
   int i = counter % 8;
   if (state)
     printf("counter %d  state %d i %d clock_state %d buffer_index %d  size %d "
@@ -57,7 +57,7 @@ extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
 
   switch (state) {
   case(OPEN_PORT):
-    state= create_socket_and_bind(port,&clientFd,&serverFd)>0 ? RECEIVE :OPEN_PORT; 
+    state= create_socket_and_bind(port,&clientFd,&serverFd, &server, &client)>0 ? RECEIVE :OPEN_PORT; 
     return 1;
 
     
@@ -119,19 +119,19 @@ extern int write_SPI(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
   }
 }
 
-int create_socket_and_bind(int port,int* clientFd, int* serverFd ) {
+int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockaddr_in* server, struct sockaddr_in* client ) {
   *serverFd = socket(AF_INET, SOCK_STREAM, 0);
   if (*serverFd < 0) {
     perror("Cannot create socket");
     exit(1);
   }
 
-  server.sin_family = AF_INET;
-  server.sin_addr.s_addr = inet_addr("127.0.0.1"); // INADDR_ANY;
-  server.sin_port = htons(port);
+  server->sin_family = AF_INET;
+  server->sin_addr.s_addr = inet_addr("127.0.0.1"); // INADDR_ANY;
+  server->sin_port = htons(port);
   int len = sizeof(server);
-  if (bind(*serverFd, (struct sockaddr *)&server, len) < 0) {
-    perror("Cannot bind socket, trying port %d",port+1);
+  if (bind(*serverFd, server, len) < 0) {
+    perror("Cannot bind socket, trying port +1");
     create_socket_and_bind(port +1,clientFd,serverFd);
     //exit(2);
   }
@@ -140,15 +140,15 @@ int create_socket_and_bind(int port,int* clientFd, int* serverFd ) {
     exit(3);
   }
 
-  len = sizeof(client);
+  len = sizeof(*client);
   printf("waiting for clients at port %d \n", port);
   if ((*clientFd = accept(*serverFd, (struct sockaddr *)&client, &len)) < 0) {
     perror("accept error");
     exit(4);
   }
-  char *client_ip = inet_ntoa(client.sin_addr);
+  char *client_ip = inet_ntoa(client->sin_addr);
   printf("Accepted new connection from a client %s:%d\n", client_ip,
-         ntohs(client.sin_port));
+         ntohs(client->sin_port));
 
   int flags = fcntl(*clientFd, F_GETFL, 0);
   fcntl(*clientFd, F_SETFL, flags | O_NONBLOCK);
