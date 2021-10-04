@@ -33,7 +33,7 @@ initial
 always @(posedge sys_clk)
 begin
 
-	spi(spi_cs_o,spi_clk_o,spi_mosi_o,spi_miso_i,port);
+	spi_master(spi_cs_o,spi_clk_o,spi_mosi_o,spi_miso_i,port);
     	
 end
 endmodule

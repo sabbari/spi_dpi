@@ -15,15 +15,13 @@ tcpsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 def kbdListener():
     global kbdInput, finished
-    kbdInput = input("spi shell : ")
-    # print ("maybe updating...the kbdInput variable is: {}".format(kbdInput))
+    kbdInput = input("spi-shell : ")
     finished = True
 def send_and_print(socket,string):
 	if(len(string)):
 		b=bytearray()
 		b.extend(map(ord,string))
 		b=b+bytearray([0xa])
-		#print(b)
 		k=socket.send(b)
 		a=socket.recv(k)
 		print(codecs.decode(a,'UTF-8'),end='',flush=True)
@@ -33,7 +31,7 @@ def send_and_print(socket,string):
 
 #num = (raw_input("Enter number: "))
 
-tcpsocket.connect(('127.0.0.1', 1235)) 
+tcpsocket.connect(('127.0.0.1', 1234)) 
 i=0
 while(1):
 	k=tcpsocket.send(bytearray([0]))
@@ -47,5 +45,4 @@ while(1):
 tcpsocket.close()
 print(a)
 print(k)
-
 
