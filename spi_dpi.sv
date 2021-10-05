@@ -39,11 +39,12 @@ end
 endmodule
 
 
+
 module spi_slave_dpi(
-    input reg spi_clk_i,
-    input reg spi_mosi_i,
-    input reg spi_cs_i,
-    output spi_miso_o
+    input  spi_clk_i,
+    input  spi_mosi_i,
+    input  spi_cs_i,
+    output reg spi_miso_o
 );
 
 parameter port = 1234;
@@ -64,12 +65,14 @@ import "DPI-C" context function int spi_slave( input bit spi_cs,
 initial 
     begin 
         spi_miso_o    =0;
+	spi_slave(spi_cs_i,spi_clk_i,spi_mosi_i,spi_miso_o,port);
     end
 
-always @(*)
+always @(posedge spi_clk_i,spi_cs_i)
 begin
 
-	spi_master(spi_cs_i,spi_clk_i,spi_mosi_i,spi_miso_o,port);
+	spi_slave(spi_cs_i,spi_clk_i,spi_mosi_i,spi_miso_o,port);
+
     	
 end
 endmodule

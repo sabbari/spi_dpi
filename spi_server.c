@@ -28,7 +28,7 @@ easier
 
 int size;
 
-unsigned int buffer_index = 0;
+
 
 int receive(int clientFd, char *buffer, char* miso_buffer);
 int send_to_client(int clientFd, char *miso_buffer, int size);
@@ -43,6 +43,7 @@ extern int spi_master(svBit *spi_cs, svBit *spi_sclk, svBit *spi_mosi,
   static int size, counter, state, clock_state = 0;
   static int clientFd, serverFd; // client and servet file descriptor
   static struct sockaddr_in server, client;
+  static unsigned int buffer_index = 0;
   int i = counter % 8;
   if (DEBUG)
     printf("counter %d  state %d i %d clock_state %d buffer_index %d  size %d "
@@ -114,48 +115,43 @@ extern int spi_slave(const unsigned int  spi_cs, const unsigned int  spi_sclk, c
 
   static unsigned char buffer[BUFFER_SIZE];
   static  char miso_buffer[BUFFER_SIZE];	
-  static int size, counter, state, clock_state = 0;
+  static int size, counter, state,debug_count = 0;
+
   static int clientFd, serverFd; // client and servet file descriptor
   static struct sockaddr_in server, client;
+  static unsigned int buffer_index = 0;
   int i = counter % 8;
-  if (DEBUG)
-    printf("counter %d  state %d i %d clock_state %d buffer_index %d  size %d "
-           "mosi[i] %d mosi %d  \n",
-           counter, state, i, clock_state, buffer_index, size,
-           buffer[buffer_index], *spi_mosi);
-  switch (state)
-  {
-  case 0:
-        state= create_socket_and_bind(port,&clientFd,&serverFd, &server, &client)>0 ? 1 :0; 
-        return 1;
-  case 1:
-    if(clock_state== CLOCK_HIGH & *spi_cs==0){
-        state=2;
-        return 1;
-        counter = 0;
-        *spi_miso =0;
-      }
-    return 1;
-  case 2 :
+  //printf("clock: %d cs: %d mosi: %d state: %d counter: %d index i: %d buffer_index %d \n",spi_sclk,spi_cs, spi_mosi, state, counter, i, buffer_index);
 
-        if(clock_state== CLOCK_HIGH & *spi_cs==0){
-            buffer[buffer_index]=buffer[buffer_index]<1 | (spi_mosi&1)
-            counter=counter+1;
-            if(i==7){
-              buffer_index=buffer_index+1;
-              return 1;
-            }
-        }else if (*spi_cs==1){
-          state =3;
-          return 1;
+
+  *spi_miso =0;
+
+	
+  if(state==0){
+	if (spi_cs ==1){
+	  state =1;
+	  }
+        else if(spi_sclk== CLOCK_HIGH ){
+	      
+               buffer[buffer_index] =(buffer[buffer_index]<<1 | (spi_mosi&1));
+	       counter=counter+1;
+	       if(i==7) buffer_index=buffer_index+1;
+		return 1 ;
         }
-  case 3 :
-      send_to_client(clientFd,buffer,buffer_index+1);
+  	}
+	if(state==1){
+	 if(buffer_index)buffer_index = (i==0) ? buffer_index-1 :buffer_index;
+	 //printf("buffer_index %d \n",buffer_index);
+	 int k=0;
+	  for(k =0; k<=buffer_index;k++) printf("%c",buffer[k]);
+	  fflush(stdout);
+	  state=0;
+	  counter = 0;
+	  buffer_index=0;
+	  return 1;
+	}
 
-      return 1;
-
-
-  }
+  
 
 }
 int create_socket_and_bind(int port,int* clientFd, int* serverFd, struct sockaddr_in* server, struct sockaddr_in* client ) {
